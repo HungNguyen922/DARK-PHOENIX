@@ -110,6 +110,38 @@ export function DashboardClient({
     disabled: uploading,
   });
 
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [ingesting, setIngesting] = useState(false);
+
+  const handleYouTubeIngest = async () => {
+    try {
+      setIngesting(true);
+
+      const res = await fetch("/api/ingest-youtube", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: youtubeUrl }),
+      });
+
+      if (!res.ok) {
+        toast.error("Failed to ingest YouTube URL");
+        return;
+      }
+
+      const data = await res.json();
+
+      toast.success("YouTube video queued!", {
+        description: "Processing has started. Check the queue below.",
+      });
+
+      setYoutubeUrl("");
+      router.refresh();
+    } catch (err) {
+      toast.error("YouTube ingestion failed");
+    } finally {
+      setIngesting(false);
+    }
+  };
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col space-y-6 px-4 py-8">
@@ -134,6 +166,41 @@ export function DashboardClient({
         </TabsList>
 
         <TabsContent value="upload">
+          {/* --- YOUTUBE INGESTION SECTION --- */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Ingest from YouTube</CardTitle>
+              <CardDescription>
+                Paste a YouTube URL and process it directly without uploading a file.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col space-y-3">
+                <input
+                  type="text"
+                  placeholder="https://www.youtube.com/watch?v=YRvf00NooN8"
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                />
+
+                <Button
+                  disabled={!youtubeUrl || ingesting}
+                  onClick={handleYouTubeIngest}
+                >
+                  {ingesting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Process YouTube Video"
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Upload Podcast</CardTitle>
