@@ -80,7 +80,6 @@ export async function POST(req: NextRequest) {
 
     const s3Key = s3_key;
 
-
     // 6. Create UploadedFile record
     const uploadedFile = await db.uploadedFile.create({
       data: {
