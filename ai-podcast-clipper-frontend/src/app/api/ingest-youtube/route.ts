@@ -29,17 +29,17 @@ export async function POST(req: Request) {
       }),
     });
 
-    let s3Key: string | null = null;
+    let s3Key: string = "";
     let status: string = "uploaded";
 
     if (modalRes.ok) {
       const data = (await modalRes.json()) as ModalResponse;
       s3Key = data.s3_key;
     } else {
-        const text = await modalRes.text();
-        console.error("Modal failed:", text);
-        status = "failed";
-        s3Key = `failed/${crypto.randomUUID()}.mp4`; // placeholder
+      const text = await modalRes.text();
+      console.error("Modal failed:", text);
+      status = "failed";
+      s3Key = `failed/${crypto.randomUUID()}.mp4`; // placeholder
     }
 
     // 2. Create UploadedFile record in DB (always)
