@@ -8,7 +8,7 @@ app = modal.App("youtube-downloader")
 
 image = (
     modal.Image.debian_slim()
-    .apt_install("ffmpeg", "python3-pip")
+    .apt_install("ffmpeg", "nodejs", "npm")
     .pip_install("yt-dlp", "boto3", "fastapi[standard]")
 )
 
