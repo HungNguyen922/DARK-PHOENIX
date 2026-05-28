@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 
+interface ModalResponse {
+  s3_key: string;
+}
+
 export async function POST(req: Request) {
   try {
-    const { url } = await req.json();
+    const body = (await req.json()) as { url?: string };
 
-    if (!url) {
+    if (!body.url) {
       return NextResponse.json({ error: "Missing YouTube URL" }, { status: 400 });
     }
 
@@ -14,7 +18,7 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        url,
+        url: body.url,
         bucket: process.env.S3_BUCKET_NAME,
         region: process.env.AWS_REGION,
         access_key: process.env.AWS_ACCESS_KEY_ID,
@@ -27,11 +31,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: text }, { status: 500 });
     }
 
-    const data = await modalRes.json();
+    const data = (await modalRes.json()) as ModalResponse;
 
-    // Example: return the S3 key to the frontend
     return NextResponse.json({ s3_key: data.s3_key });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
