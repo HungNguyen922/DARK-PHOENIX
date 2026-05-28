@@ -18,11 +18,11 @@ function extractYouTubeId(url: string): string | null {
     const u = new URL(url);
 
     if (u.hostname === "youtu.be") {
-      return u.pathname.slice(1) || null;
+      return u.pathname.slice(1) ?? null;
     }
 
     if (u.hostname.includes("youtube.com")) {
-      return u.searchParams.get("v") || null;
+      return u.searchParams.get("v") ?? null;
     }
 
     return null;
@@ -59,8 +59,8 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Parse body
-    const body = await req.json().catch(() => null);
-    const url = body?.url as string | undefined;
+    const body: { url?: string } | null = await req.json().catch(() => null);
+    const url = body?.url ?? undefined;
 
     if (!url) {
       return NextResponse.json({ error: "Missing url" }, { status: 400 });
