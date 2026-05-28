@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { promisify } from "node:util";
 import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
@@ -37,15 +38,11 @@ async function downloadYouTubeToTmp(url: string): Promise<string> {
 
   try {
     await fs.unlink(outputPath);
-  } catch {}
+  } catch {
+    // ignore
+  }
 
-  await execFileAsync("yt-dlp", [
-    "-f",
-    "mp4",
-    "-o",
-    outputPath,
-    url,
-  ]);
+  await execFileAsync("yt-dlp", ["-f", "mp4", "-o", outputPath, url]);
 
   return outputPath;
 }
@@ -58,18 +55,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 2. Parse body
-    const body: { url?: string } | null = await req.json().catch(() => null);
-    const url = body?.url ?? undefined;
+    // 2. Parse body safely
+    const body = (await req.json()) as unknown;
 
-    if (!url) {
+    if (
+      !body ||
+      typeof body !== "object" ||
+      !("url" in body) ||
+      typeof (body as { url: unknown }).url !== "string"
+    ) {
       return NextResponse.json({ error: "Missing url" }, { status: 400 });
     }
+
+    const url = (body as { url: string }).url;
 
     // 3. Extract YouTube ID
     const videoId = extractYouTubeId(url);
     if (!videoId) {
-      return NextResponse.json({ error: "Invalid YouTube URL" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid YouTube URL" },
+        { status: 400 }
+      );
     }
 
     // 4. Download video

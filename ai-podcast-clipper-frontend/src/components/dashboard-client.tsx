@@ -128,7 +128,7 @@ export function DashboardClient({
         return;
       }
 
-      const data: { status?: string } = await res.json();
+      const data: { status?: string; uploadedFileId?: string } = await res.json();
 
       toast.success("YouTube video queued!", {
         description: "Processing has started. Check the queue below.",
