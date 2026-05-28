@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
     // 3. Trigger Inngest pipeline
     await inngest.send({
-      name: "video.uploaded",
+      name: "process-video-events",
       data: {
         uploadedFileId: uploaded.id,
         userId: uploaded.userId,
