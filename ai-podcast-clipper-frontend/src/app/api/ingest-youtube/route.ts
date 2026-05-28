@@ -29,8 +29,8 @@ export async function POST(req: Request) {
       }),
     });
 
-    let s3Key: string = "";
-    let status: string = "uploaded";
+    let s3Key = "";
+    let status = "uploaded";
 
     if (modalRes.ok) {
       const data = (await modalRes.json()) as ModalResponse;
