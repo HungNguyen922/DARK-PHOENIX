@@ -24,7 +24,7 @@ def download_youtube(body: dict):
     output_path = f"/tmp/{uuid4()}.mp4"
 
     subprocess.run(
-        ["yt-dlp", "-t", "mp4", "-o", output_path, url],
+        ["yt-dlp", "--js-runtime", "node", "-t", "mp4", "-o", output_path, url],
         check=True
     )
 
