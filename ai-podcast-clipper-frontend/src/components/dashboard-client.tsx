@@ -128,7 +128,10 @@ export function DashboardClient({
         return;
       }
 
-      const data: { status?: string; uploadedFileId?: string } = await res.json();
+      const _data = (await res.json()) as {
+        status?: string;
+        uploadedFileId?: string;
+      };
 
       toast.success("YouTube video queued!", {
         description: "Processing has started. Check the queue below.",
@@ -136,12 +139,13 @@ export function DashboardClient({
 
       setYoutubeUrl("");
       router.refresh();
-    } catch (err) {
+    } catch {
       toast.error("YouTube ingestion failed");
     } finally {
       setIngesting(false);
     }
   };
+
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col space-y-6 px-4 py-8">
