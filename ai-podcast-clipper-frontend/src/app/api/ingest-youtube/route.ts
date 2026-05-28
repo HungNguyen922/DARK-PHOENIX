@@ -1,18 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { promisify } from "node:util";
-import { execFile } from "node:child_process";
-import fs from "node:fs/promises";
-import path from "node:path";
-
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 import { db } from "~/server/db";
 import { auth } from "~/server/auth";
 import { env } from "~/env";
 import { inngest } from "~/inngest/client";
-
-const execFileAsync = promisify(execFile);
 
 function extractYouTubeId(url: string): string | null {
   try {
@@ -32,20 +24,6 @@ function extractYouTubeId(url: string): string | null {
   }
 }
 
-async function downloadYouTubeToTmp(url: string): Promise<string> {
-  const tmpDir = "/tmp";
-  const outputPath = path.join(tmpDir, "original.mp4");
-
-  try {
-    await fs.unlink(outputPath);
-  } catch {
-    // ignore
-  }
-
-  await execFileAsync("yt-dlp", ["-f", "mp4", "-o", outputPath, url]);
-
-  return outputPath;
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -78,29 +56,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Download video
-    const filePath = await downloadYouTubeToTmp(url);
-    const fileBuffer = await fs.readFile(filePath);
-
-    // 5. Upload to S3
-    const s3Client = new S3Client({
-      region: env.AWS_REGION,
-      credentials: {
-        accessKeyId: env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
-      },
+    // 4. Ask Modal to download + upload to S3
+    const modalRes = await fetch(`${env.MODAL_BASE_URL}/download_youtube`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url,
+        bucket: env.S3_BUCKET_NAME,
+        region: env.AWS_REGION,
+        access_key: env.AWS_ACCESS_KEY_ID,
+        secret_key: env.AWS_SECRET_ACCESS_KEY,
+      }),
     });
 
-    const s3Key = `original/${videoId}.mp4`;
+    if (!modalRes.ok) {
+      return NextResponse.json(
+        { error: "Modal failed to download video" },
+        { status: 500 }
+      );
+    }
 
-    await s3Client.send(
-      new PutObjectCommand({
-        Bucket: env.S3_BUCKET_NAME,
-        Key: s3Key,
-        Body: fileBuffer,
-        ContentType: "video/mp4",
-      })
-    );
+    const { s3_key } = (await modalRes.json()) as { s3_key: string };
+
+    const s3Key = s3_key;
+
 
     // 6. Create UploadedFile record
     const uploadedFile = await db.uploadedFile.create({

@@ -19,6 +19,7 @@ export const env = createEnv({
     AWS_SECRET_ACCESS_KEY: z.string(),
     AWS_REGION: z.string(),
     S3_BUCKET_NAME: z.string(),
+    MODAL_BASE_URL: z.string().url(),
     PROCESS_VIDEO_ENDPOINT: z.string(),
     PROCESS_VIDEO_ENDPOINT_AUTH: z.string(),
     STRIPE_SECRET_KEY: z.string(),
@@ -51,6 +52,7 @@ export const env = createEnv({
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     AWS_REGION: process.env.AWS_REGION,
     S3_BUCKET_NAME: process.env.S3_BUCKET_NAME,
+    MODAL_BASE_URL: process.env.MODAL_BASE_URL,
     PROCESS_VIDEO_ENDPOINT: process.env.PROCESS_VIDEO_ENDPOINT,
     PROCESS_VIDEO_ENDPOINT_AUTH: process.env.PROCESS_VIDEO_ENDPOINT_AUTH,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:

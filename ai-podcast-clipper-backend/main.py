@@ -21,6 +21,7 @@ import pysubs2
 from tqdm import tqdm
 # import whisperx
 whisperx = None
+from modal_download_youtube import download_youtube
 
 class ProcessVideoRequest(BaseModel):
     s3_key: str
