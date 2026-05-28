@@ -10,10 +10,11 @@ app = modal.App("youtube-downloader")
 image = (
     modal.Image.debian_slim()
     .apt_install("ffmpeg", "python3-pip")
-    .pip_install("yt-dlp", "boto3")
+    .pip_install("yt-dlp", "boto3", "fastapi[standard]")
 )
 
 @app.function(image=image, timeout=600)
+@modal.fastapi_endpoint(method="POST")
 def download_youtube(url: str, bucket: str, region: str, access_key: str, secret_key: str):
     # 1. Download video to /tmp
     output_path = f"/tmp/{uuid4()}.mp4"
