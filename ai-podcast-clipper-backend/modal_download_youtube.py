@@ -32,7 +32,6 @@ def download_youtube(url: str, bucket: str, region: str, access_key: str, secret
     )
 
     s3_key = f"original/{os.path.basename(output_path)}"
-
     s3.upload_file(output_path, bucket, s3_key)
 
     return {"s3_key": s3_key}
