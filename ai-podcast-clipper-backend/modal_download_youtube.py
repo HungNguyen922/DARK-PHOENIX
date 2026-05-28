@@ -3,20 +3,32 @@ import subprocess
 import os
 import boto3
 from uuid import uuid4
+from pydantic import BaseModel
 
 app = modal.App("youtube-downloader")
 
-# Modal image with yt-dlp installed
 image = (
     modal.Image.debian_slim()
     .apt_install("ffmpeg", "python3-pip")
-    .pip_install("yt-dlp", "boto3", "fastapi[standard]")
+    .pip_install("yt-dlp", "boto3", "fastapi[standard]", "pydantic")
 )
 
+class DownloadRequest(BaseModel):
+    url: str
+    bucket: str
+    region: str
+    access_key: str
+    secret_key: str
+
 @app.function(image=image, timeout=600)
-@modal.fastapi_endpoint(method="POST")
-def download_youtube(url: str, bucket: str, region: str, access_key: str, secret_key: str):
-    # 1. Download video to /tmp
+@modal.fastapi_endpoint(method="POST", path="/download_youtube")
+def download_youtube(req: DownloadRequest):
+    url = req.url
+    bucket = req.bucket
+    region = req.region
+    access_key = req.access_key
+    secret_key = req.secret_key
+
     output_path = f"/tmp/{uuid4()}.mp4"
 
     subprocess.run(
@@ -24,7 +36,6 @@ def download_youtube(url: str, bucket: str, region: str, access_key: str, secret
         check=True
     )
 
-    # 2. Upload to S3
     s3 = boto3.client(
         "s3",
         region_name=region,
