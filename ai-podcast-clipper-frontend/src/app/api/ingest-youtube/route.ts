@@ -29,25 +29,30 @@ export async function POST(req: Request) {
       }),
     });
 
-    if (!modalRes.ok) {
-      const text = await modalRes.text();
-      return NextResponse.json({ error: text }, { status: 500 });
+    let s3Key: string | null = null;
+    let status: string = "uploaded";
+
+    if (modalRes.ok) {
+      const data = (await modalRes.json()) as ModalResponse;
+      s3Key = data.s3_key;
+    } else {
+        const text = await modalRes.text();
+        console.error("Modal failed:", text);
+        status = "failed";
+        s3Key = `failed/${crypto.randomUUID()}.mp4`; // placeholder
     }
 
-    const data = (await modalRes.json()) as ModalResponse;
-
-    // 2. Create UploadedFile record in DB
+    // 2. Create UploadedFile record in DB (always)
     const uploaded = await prisma.uploadedFile.create({
       data: {
-        s3Key: data.s3_key,
-        status: "uploaded",
+        s3Key,
+        status,
         displayName: "YouTube Video",
-        // TODO: replace with real user ID if you have auth
         userId: "test-user",
       },
     });
 
-    // 3. Trigger Inngest pipeline
+    // 3. Trigger Inngest pipeline (always)
     await inngest.send({
       name: "process-video-events",
       data: {
@@ -57,7 +62,7 @@ export async function POST(req: Request) {
     });
 
     // 4. Return uploadedFileId to frontend
-    return NextResponse.json({ uploadedFileId: uploaded.id });
+    return NextResponse.json({ uploadedFileId: uploaded.id, status });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
