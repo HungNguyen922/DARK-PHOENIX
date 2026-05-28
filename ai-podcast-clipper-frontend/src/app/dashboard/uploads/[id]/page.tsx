@@ -2,19 +2,18 @@ import { prisma } from "~/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
-export default async function UploadDetailsPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function UploadDetailsPage(
+  props: { params: { id: string } }
+) {
+  const { id } = props.params;
+
   const upload = await prisma.uploadedFile.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { clips: true },
   });
 
   if (!upload) return notFound();
 
-  // Build S3 URL helper
   const buildS3Url = (key: string) =>
     `https://${process.env.NEXT_PUBLIC_S3_BUCKET}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${key}`;
 
